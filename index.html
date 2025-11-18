@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Image Cards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .card-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .card:hover .card-image {
+            transform: scale(1.03);
+        }
+
+        .card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .card-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #ecf0f1;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #34495e;
+            font-size: 0.9rem;
+        }
+
+        .detail-value {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .card-date {
+            font-size: 0.85rem;
+            color: #95a5a6;
+        }
+
+        .card-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .card-button:hover {
+            background-color: #2980b9;
+        }
+
+        .aspect-ratio-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90%;
+            max-height: 90%;
+            transition: transform 0.3s ease;
+        }
+
+        .modal-image {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.5);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .modal-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 1001;
+        }
+
+        .modal-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .modal-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-title {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0 20px;
+            z-index: 1001;
+        }
+
+        .modal-details {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 1rem;
+            padding: 0 20px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* Zoom controls */
+        .zoom-controls {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1001;
+        }
+
+        .zoom-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .zoom-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            
+            .card-content {
+                padding: 15px;
+            }
+            
+            .card-title {
+                font-size: 1.15rem;
+            }
+
+            .modal-close {
+                top: 10px;
+                right: 15px;
+                font-size: 30px;
+                width: 40px;
+                height: 40px;
+            }
+
+            .modal-controls {
+                bottom: 10px;
+            }
+
+            .modal-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .zoom-controls {
+                right: 10px;
+            }
+
+            .zoom-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .modal-title {
+                font-size: 1.3rem;
+            }
+
+            .modal-details {
+                top: 60px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            body {
+                padding: 10px;
+            }
+
+            .modal-title {
+                top: 60px;
+                font-size: 1.2rem;
+            }
+
+            .modal-details {
+                top: 90px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .card-content {
+                padding: 12px;
+            }
+            
+            .card-title {
+                font-size: 1.1rem;
+            }
+            
+            .card-details {
+                font-size: 0.9rem;
+            }
+
+            .modal-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .modal-title {
+                font-size: 1.1rem;
+            }
+
+            .modal-details {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin: 20px 0 10px; color: #2c3e50;"> Special page just for you Sir for better understanding...</h1>
+        <p style="text-align: center; color: #7f8c8d; margin-bottom: 30px;">Click on any product to view/zoom</p>
+        
+        <div class="cards-grid" id="cardsContainer">
+            <!-- Cards will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Modal for fullscreen image view -->
+    <div id="imageModal" class="modal">
+        <span class="modal-close">&times;</span>
+        <h2 class="modal-title" id="modalTitle"></h2>
+        <div class="modal-details" id="modalDetails"></div>
+        <div class="modal-content">
+            <img id="modalImage" class="modal-image" src="" alt="">
+        </div>
+        <div class="zoom-controls">
+            <button class="zoom-btn" id="zoomIn">+</button>
+            <button class="zoom-btn" id="zoomOut">-</button>
+            <button class="zoom-btn" id="resetZoom">↺</button>
+        </div>
+        <div class="modal-controls">
+            <button class="modal-btn" id="downloadBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 16L12 4M12 16L8 12M12 16L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 20H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Download Image
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for cards with additional fields
+        const cardData = [
+            { 
+                id: 1, 
+                title: "Bambooless Front View Rs:- 60/-", 
+                imageUrl: "Gold Front.jpg",
+                type: "Bambooless",
+                fragrance: "Rose | Panchatatva | Guggal | Mogra | Musk",
+                weight: "100g",
+                totalSticks: "30 Sticks"
+            },
+            { 
+                id: 2, 
+                title: "Bamboo Less Back View Rs:- 60/-", 
+                imageUrl: "Gold Back.jpg",
+                type: "Bambooless",
+                fragrance: "Rose | Panchatatva | Guggal | Mogra | Musk",
+                weight: "100g",
+                totalSticks: "30 Sticks"
+            },
+            { 
+                id: 3, 
+                title: "Bamboo Stick Jasmine Rs:-50/-", 
+                imageUrl: "Jasmine 50.jpg",
+                type: "Bamboo Stick",
+                fragrance: "Jasmine",
+                weight: "100g",
+                totalSticks: "60 Sticks"
+            },
+            { 
+                id: 4, 
+                title: "Banboo Stick Lavender Rs:- 50/-", 
+                imageUrl: "Lavender 50.jpg",
+                type: "Bamboo Stick",
+                fragrance: "Lavender",
+                weight: "100g",
+                totalSticks: "60 Sticks"
+            },
+            { 
+                id: 5, 
+                title: "Banboo Stick Mogra Rs:- 50/-", 
+                imageUrl: "Mogra 50.jpg",
+                type: "Banboo Stick",
+                fragrance: "Mogra",
+                 weight: "100g",
+                totalSticks: "60 Sticks"
+            },
+            { 
+                id: 6, 
+                title: "Banboo Stick Musk Rs:- 50/-", 
+                imageUrl: "Musk 50.jpg",
+                type: "Banboo Stick",
+                fragrance: "Musk",
+                 weight: "100g",
+                totalSticks: "60 Sticks"
+            },
+            { 
+                id: 7, 
+                title: "Banboo Stick Sandalwood Rs:- 50/-", 
+                imageUrl: "Sandalwood 50.jpg",
+                type: "Banboo Stick",
+                fragrance: "Sandalwood",
+                 weight: "100g",
+                totalSticks: "60 Sticks"
+            },
+            { 
+                id: 8, 
+                title: "Banboo Stick Rs:- 50/-", 
+                imageUrl: "White Front.jpg",
+                type: "Banbooless",
+                fragrance: "Mogra/ Sandalwood",
+                weight: "100g",
+                totalSticks: "50 Sticks"
+            },
+            { 
+                id: 9, 
+                title: "Banboo Stick Rs:- 50/-", 
+                imageUrl: "White Back.jpg",
+                type: "Banbooless",
+                fragrance: "Mogra & Sandalwood",
+                weight: "100g",
+                totalSticks: "50 Sticks"
+            },
+            { 
+                id: 10, 
+                title: "MSPJ 200gm", 
+                imageUrl: "MSPJ200gm.jpg",
+                type: "Banboo Stick",
+                fragrance: "Musk | Sandalwood | Panchatatva | Jasmine",
+                weight: "200g/pouch",
+                totalSticks: " 120 Sticks/pouch"
+            },
+            { 
+                id: 11, 
+                title: "Red Tube", 
+                imageUrl: "Red Tube.jpg",
+                type: "Banboo Stick",
+                fragrance: "Jasmiine | Sandalwood | Mogra | Lavender | Musk | Mix-Magic",
+                weight: "100g/tube",
+                totalSticks: "60 Sticks/tube"
+            },
+            { 
+                id: 12, 
+                title: "Banboo Stick Jasmine Rs:- 100/-", 
+                imageUrl: "Jasmine200gm.jpg",
+                type: "Banboo Stick",
+                fragrance: "Jasmine",
+                weight: "200g",
+                totalSticks: " 120 Sticks"
+            },
+            { 
+                id: 13, 
+                title: "Banboo Stick Musk Rs:- 100/-", 
+                imageUrl: "Musk200gm.jpg",
+                type: "Banboo Stick",
+                fragrance: "Musk",
+                weight: "200g",
+                totalSticks: " 120 Sticks"
+            },
+            { 
+                id: 14, 
+                title: "Banboo Stick Panchatatva Rs:- 100/-", 
+                imageUrl: "Panchatatva200gm.jpg",
+                type: "Banboo Stick",
+                fragrance: "Panchatatva",
+                weight: "200g",
+                totalSticks: " 120 Sticks"
+            },
+            { 
+                id: 15, 
+                title: "Banboo Stick Sandalwood Rs:- 100/-", 
+                imageUrl: "Sandalwood200gm.jpg",
+                type: "Banboo Stick",
+                fragrance: "Sandalwood",
+                weight: "200g",
+                totalSticks: " 120 Sticks"
+            },
+            { 
+                id: 16, 
+                title: "One Inventory", 
+                imageUrl: "one inventory.jpg",
+                type: "",
+                fragrance: "",
+                weight: "",
+                totalSticks: ""
+            }
+        ];
+
+        // Modal functionality
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDetails = document.getElementById('modalDetails');
+        const closeBtn = document.querySelector('.modal-close');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const resetZoomBtn = document.getElementById('resetZoom');
+
+        let currentScale = 1;
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+
+        // Function to create card elements
+        function createCard(card) {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            
+            cardElement.innerHTML = `
+                <div class="image-container">
+                    <img src="${card.imageUrl}" alt="${card.title}" class="card-image">
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">${card.title}</h3>
+                    <div class="card-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Type:&nbsp</span>
+                            <span class="detail-value">${card.type}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Fragrance:&nbsp</span>
+                            <span class="detail-value">${card.fragrance}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Weight:&nbsp</span>
+                            <span class="detail-value">${card.weight}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Total Sticks:&nbsp</span>
+                            <span class="detail-value">${card.totalSticks}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add click event to open modal
+            cardElement.addEventListener('click', () => openModal(card));
+            
+            return cardElement;
+        }
+
+        // Function to open modal with image
+        function openModal(card) {
+            modal.style.display = 'block';
+            modalImage.src = card.imageUrl;
+            
+            currentScale = 1;
+            updateImageScale();
+            
+            // Prevent body scrolling when modal is open
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Function to close modal
+        function closeModal() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Function to update image scale
+        function updateImageScale() {
+            modalImage.style.transform = `scale(${currentScale})`;
+        }
+
+        // Function to handle zoom in
+        function zoomIn() {
+            currentScale += 0.2;
+            updateImageScale();
+        }
+
+        // Function to handle zoom out
+        function zoomOut() {
+            if (currentScale > 0.4) {
+                currentScale -= 0.2;
+                updateImageScale();
+            }
+        }
+
+        // Function to reset zoom
+        function resetZoom() {
+            currentScale = 1;
+            updateImageScale();
+        }
+
+        // Function to download image
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.href = modalImage.src;
+            link.download = modalTitle.textContent + '.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Event listeners for modal controls
+        closeBtn.addEventListener('click', closeModal);
+        downloadBtn.addEventListener('click', downloadImage);
+        zoomInBtn.addEventListener('click', zoomIn);
+        zoomOutBtn.addEventListener('click', zoomOut);
+        resetZoomBtn.addEventListener('click', resetZoom);
+
+        // Close modal when clicking outside the image
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Touch events for mobile zoom and pan
+        modalImage.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                // Two-finger touch for zoom
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const distance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                modalImage.dataset.startDistance = distance;
+            } else if (e.touches.length === 1 && currentScale > 1) {
+                // One-finger touch for panning (only when zoomed)
+                isDragging = true;
+                startX = e.touches[0].pageX - modalImage.offsetLeft;
+                startY = e.touches[0].pageY - modalImage.offsetTop;
+                modalImage.style.cursor = 'grabbing';
+            }
+        });
+
+        modalImage.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                // Handle pinch zoom
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const distance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                
+                const startDistance = parseFloat(modalImage.dataset.startDistance);
+                const scaleChange = distance / startDistance;
+                
+                currentScale = Math.max(0.5, Math.min(3, currentScale * scaleChange));
+                updateImageScale();
+                
+                modalImage.dataset.startDistance = distance;
+            } else if (isDragging) {
+                // Handle panning
+                e.preventDefault();
+                const x = e.touches[0].pageX - startX;
+                const y = e.touches[0].pageY - startY;
+                
+                // Apply constraints to prevent dragging too far
+                const maxX = (modalImage.clientWidth * currentScale - modalImage.clientWidth) / 2;
+                const maxY = (modalImage.clientHeight * currentScale - modalImage.clientHeight) / 2;
+                
+                const translateX = Math.max(-maxX, Math.min(maxX, x));
+                const translateY = Math.max(-maxY, Math.min(maxY, y));
+                
+                modalImage.style.transform = `scale(${currentScale}) translate(${translateX}px, ${translateY}px)`;
+            }
+        });
+
+        modalImage.addEventListener('touchend', () => {
+            isDragging = false;
+            modalImage.style.cursor = 'grab';
+            delete modalImage.dataset.startDistance;
+        });
+
+        // Double click/tap to zoom in and out
+        modalImage.addEventListener('dblclick', () => {
+            if (currentScale === 1) {
+                currentScale = 2;
+            } else {
+                currentScale = 1;
+            }
+            updateImageScale();
+        });
+
+        // Function to render all cards
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            
+            cardData.forEach(card => {
+                const cardElement = createCard(card);
+                container.appendChild(cardElement);
+            });
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', renderCards);
+    </script>
+</body>
+</html>
